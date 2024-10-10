@@ -61,4 +61,10 @@ public class ErrorHandler {
     public ErrorResponse handleException(Throwable e) {
         return new ErrorResponse(String.format("Ошибка сервера: %s", e.getMessage()));
     }
+
+    @ExceptionHandler(DataException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleException(Exception e) {
+        return new ErrorResponse(String.format("Ошибка сервера: %s", e.getMessage()));
+    }
 }

@@ -1,94 +1,52 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exceptions.DuplicatedDataException;
-import ru.yandex.practicum.filmorate.exceptions.NotFoundUserException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.friendRequests.FriendRequestsStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service("userService")
+@RequiredArgsConstructor
 public class UserService {
 
-    private InMemoryUserStorage userStorage;
+    private final UserStorage userStorage;
+    private final FriendRequestsStorage friendRequestsStorage;
 
-
-    @Autowired
-    public UserService(InMemoryUserStorage userStorage) {
-        this.userStorage = userStorage;
+    public User createUser(User user) {
+        if (user.getName().isEmpty()) {
+            user.setName(user.getLogin());
+        }
+        return userStorage.createUser(user);
     }
 
-    public User addFriend(User userFrom, User userTo) {
-        if (userFrom.getFriends() == null) {
-            userFrom.setFriends(new HashSet<>());
-        }
-        if (userTo.getFriends() == null) {
-            userTo.setFriends(new HashSet<>());
-        }
-        if ((userFrom.getFriends().contains(userTo.getId())) | (userTo.getFriends().contains(userFrom.getId()))) {
-            log.error("Пользователи в друзьях");
-            throw new DuplicatedDataException("Пользователи уже в друзьях");
-        }
-        Set<Long> friendsFrom = userFrom.getFriends();
-        Set<Long> friendsTo = userTo.getFriends();
-        friendsFrom.add(userTo.getId());
-        friendsTo.add(userFrom.getId());
-        userFrom.setFriends(friendsFrom);
-        userTo.setFriends(friendsTo);
-        log.info("Пользователь {} добавлен в друзья к пользовалю {}", userFrom, userTo);
+    public void createFriend(Long userId, Long friendId) {
+        friendRequestsStorage.addFriend(userId, getUserById(friendId).getId());
 
-        return userFrom;
     }
 
-    public User removeFriend(User userFrom, User userTo) {
-        if (userFrom.getFriends() == null) {
-            log.error("Пользователь не имеет друзей");
-            userFrom.setFriends(new HashSet<>());
-        }
-        if (userTo.getFriends() == null) {
-            log.error("Пользователь не имеет друзей");
-            userTo.setFriends(new HashSet<>());
-        }
-        if ((userFrom.getFriends().contains(userTo.getId())) & (userTo.getFriends().contains(userFrom.getId()))) {
-            userFrom.getFriends().remove(userTo.getId());
-            userTo.getFriends().remove(userFrom.getId());
-            log.info("Пользователь {} удален из друзей пользователя {}", userFrom, userTo);
-            return userFrom;
-        } else {
-            log.error("Пользователи не в друзьях");
-            throw new NotFoundUserException("Пользователи не в друзьях");
-        }
+    public Collection<User> getUserFriends(Long userId) {
+        return userStorage.getUserFriends(userId);
+    }
+
+    public void removeFriend(User userFrom, User userTo) {
+        friendRequestsStorage.deleteFriend(userFrom.getId(), userTo.getId());
     }
 
     public Collection<User> getMutualFriends(User userFrom, User userTo) {
-        log.info("Общие друщья пользователя {} и {}", userFrom, userTo);
-        HashSet<Long> userFriends = (HashSet<Long>) userFrom.getFriends();
-        HashSet<Long> otherFriends = (HashSet<Long>) userTo.getFriends();
-        HashSet<Long> commonFriends = new HashSet<>(userFriends);
-        commonFriends.retainAll(otherFriends);
-        log.trace("Общие друзья пользователя {}", commonFriends.retainAll(otherFriends));
-        return commonFriends.stream()
-                .map(friendId -> userStorage.getUserById(friendId))
-                .collect(Collectors.toSet());
+        return userStorage.getMutualFriends(userFrom, userTo);
     }
 
-    public Collection<User> findAllUsers() {
-        return userStorage.findAllUsers();
+    public Collection<User> getAllUsers() {
+        return userStorage.getAllUsers();
     }
 
-    public User getUserById(long id) {
+    public User getUserById(Long id) {
         return userStorage.getUserById(id);
-    }
-
-    public User addUser(User user) {
-        return userStorage.addUser(user);
     }
 
     public User updateUser(User user) {

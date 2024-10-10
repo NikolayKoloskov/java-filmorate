@@ -1,32 +1,28 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
-import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
 @RequestMapping("/users")
+@RequiredArgsConstructor
 public class UserController {
 
-    private UserService userService;
+    private final UserService userService;
+    private final FilmService filmService;
 
-    @Autowired
-    public UserController(InMemoryUserStorage userStorage, UserService userService) {
-        this.userService = userService;
-    }
 
     @GetMapping
-    public Collection<User> findAllUsers() {
-        return userService.findAllUsers();
+    public Collection<User> getAllUsers() {
+        return userService.getAllUsers();
     }
 
     @GetMapping("/{id}")
@@ -35,15 +31,8 @@ public class UserController {
     }
 
     @GetMapping("/{id}/friends")
-    public Collection<User> findUserFriends(@PathVariable Long id) {
-        HashSet<Long> userFriends = (HashSet<Long>) userService.getUserById(id).getFriends();
-        if (userFriends == null) {
-            userFriends = new HashSet<>();
-            userService.getUserById(id).setFriends(userFriends);
-        }
-        return userFriends.stream()
-                .map(friendId -> userService.getUserById(friendId))
-                .collect(Collectors.toSet());
+    public Collection<User> getUserFriends(@PathVariable Long id) {
+        return userService.getUserFriends(id);
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
@@ -53,7 +42,7 @@ public class UserController {
 
     @PostMapping
     public User create(@Valid @RequestBody User user) {
-        return userService.addUser(user);
+        return userService.createUser(user);
     }
 
     @PutMapping
@@ -62,8 +51,8 @@ public class UserController {
     }
 
     @PutMapping("/{id}/friends/{friendId}")
-    public User addFriend(@PathVariable Long id, @PathVariable Long friendId) {
-        return userService.addFriend(userService.getUserById(id), userService.getUserById(friendId));
+    public void addFriend(@PathVariable Long id, @PathVariable Long friendId) {
+        userService.createFriend(userService.getUserById(id).getId(), userService.getUserById(friendId).getId());
     }
 
     @DeleteMapping
@@ -72,8 +61,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
-    public User removeFriend(@PathVariable Long id, @PathVariable Long friendId) {
-        return userService.removeFriend(userService.getUserById(id), userService.getUserById(friendId));
+    public void removeFriend(@PathVariable Long id, @PathVariable Long friendId) {
+        userService.removeFriend(userService.getUserById(id), userService.getUserById(friendId));
     }
-
 }

@@ -1,53 +1,31 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exceptions.ConditionsNotMetException;
-import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.like.LikeStorage;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service("filmService")
+@RequiredArgsConstructor
 public class FilmService {
 
-    private InMemoryFilmStorage filmStorage;
+    private final FilmStorage filmStorage;
+    private final LikeStorage likeStorage;
 
-    @Autowired
-    public FilmService(InMemoryFilmStorage filmStorage) {
-        this.filmStorage = filmStorage;
+    public void addLikeToFilm(Film film, User user) {
+        likeStorage.addLike(film.getId(), user.getId());
+        filmStorage.updateFilm(film);
     }
 
-    public Film addLikeToFilm(Film film, User user) {
-        if (film.getLikes() == null) {
-            film.setLikes(new HashSet<>());
-        }
-        if (film.getLikes().contains(user.getId())) {
-            log.error("У пользователя {} уже есть лайк к этому фильму {}", user, film);
-            throw new ConditionsNotMetException("У пользователя уже есть лайк к этому фильму");
-        }
-        log.info("Пользователь {} добавил лайк к фильму {}", user, film);
-        film.getLikes().add(user.getId());
-        return film;
-    }
-
-    public Film removeLikeFromFilm(Film film, User user) {
-        if (film.getLikes() == null) {
-            film.setLikes(new HashSet<>());
-        }
-        if (!film.getLikes().contains(user.getId())) {
-            log.error("У пользователя {} нет лайка к этому фильму {}", user, film);
-            throw new NotFoundException("У пользователя нет лайка к этому фильму");
-        }
-        log.info("Пользователь {} удалил лайк к фильму {}", user, film);
-        film.getLikes().remove(user.getId());
-        return film;
+    public boolean removeLike(Long filmId, Long userId) {
+        return likeStorage.removeLike(filmId, userId);
     }
 
     public Collection<Film> getTopFilmsLimited(int limit) {
@@ -64,7 +42,7 @@ public class FilmService {
     }
 
     public Film getFilmById(long id) {
-        return filmStorage.getFilmById(id);
+        return filmStorage.getFilmByFilmId(id);
     }
 
     public Film addFilm(Film film) {

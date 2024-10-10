@@ -4,15 +4,16 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 import java.time.LocalDate;
-import java.util.Set;
+import java.util.Collection;
 
 @Data
 @EqualsAndHashCode(exclude = "id")
-
+@Builder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
 
     private long id;
@@ -32,5 +33,5 @@ public class User {
     @Past(message = "Ошибка валидации даты рождения, дата должна быть меньше текущей даты")
     private LocalDate birthday;
 
-    private Set<Long> friends;
+    private Collection<User> friends;
 }
