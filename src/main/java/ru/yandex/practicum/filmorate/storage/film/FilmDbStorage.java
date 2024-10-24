@@ -112,8 +112,39 @@ public class FilmDbStorage implements FilmStorage {
             Collection<Genre> filmGenres = filmGenreStorage.getAllFilmGenresByFilmId(id);
             return films.getFirst().toBuilder().genres(filmGenres).build();
         }
-
         return null;
+    }
+
+    @Override
+    public Collection<Film> getPopularFilmsByGenreAndYear(int count, String genreId, String year) {
+
+
+        var sql = "select f.* " +
+                "       , m.id as mpa_id " +
+                "       , m.name as mpa_name " +
+                "from films f " +
+                "left join mpa m on f.mpa_rating = m.id " +
+                "join (select film_id" +
+                "       , count(user_id) as likes_count " +
+                "       from film_likes " +
+                "       group by film_id ) as popular on popular.film_id = f.id "
+                ;
+        if (!genreId.isEmpty()) {
+            sql = sql + " left join film_genres g on g.film_id = f.id ";
+        }
+        sql = sql + "where 1=1 ";
+        if (!genreId.isEmpty()) {
+            sql = sql +  " and g.genre_id = " + Integer.parseInt(genreId);
+        }
+        if (!year.isEmpty()) {
+            sql = sql + " and extract(year from cast(f.release_date as date)) = " + Integer.parseInt(year);
+        }
+        sql = sql + " order by likes_count desc " +
+                    " limit ?;";
+
+        Collection<Film> films = jdbcTemplate.query(sql, new FilmMapper(), count);
+        return setFilmGenres(films);
+
     }
 
     private Film addFields(Film film) {
