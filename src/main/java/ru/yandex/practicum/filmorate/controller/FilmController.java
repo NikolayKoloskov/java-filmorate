@@ -66,4 +66,11 @@ class FilmController {
         log.info("Пользователь {} убрал лайк с фильма {}", userId, id);
         return filmService.getFilmById(id);
     }
+
+    @GetMapping("/director/{directorId}")
+    public Collection<Film> getSortedFilms(
+            @PathVariable("directorId") Integer directorId, @RequestParam String sortBy
+    ) {
+        return filmService.getDirectorFilms(directorId, sortBy);
+    }
 }

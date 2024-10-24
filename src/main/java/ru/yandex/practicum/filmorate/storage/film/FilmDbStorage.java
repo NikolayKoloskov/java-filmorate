@@ -9,10 +9,8 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exceptions.DataException;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Like;
-import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.storage.filmDirector.FilmDirectorStorage;
 import ru.yandex.practicum.filmorate.storage.filmGenre.FilmGenreStorage;
 import ru.yandex.practicum.filmorate.storage.like.LikeDbStorage;
 import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
@@ -32,6 +30,7 @@ public class FilmDbStorage implements FilmStorage {
     private final FilmGenreStorage filmGenreStorage;
     private final MpaStorage mpaStorage;
     private final LikeDbStorage likeDbStorage;
+    private final FilmDirectorStorage filmDirectorStorage;
 
     @Override
     public Film addFilm(Film film) {
@@ -68,11 +67,13 @@ public class FilmDbStorage implements FilmStorage {
         final String sql = "delete from films where id = ?";
         final String sqlGenre = "delete from film_genres where film_id = ?";
         final String sqlLike = "delete from film_likes where film_id = ?";
+        final String sqlDirector = "delete from film_directors where film_id = ?";
 
         try {
             jdbcTemplate.update(sql, film.getId());
             jdbcTemplate.update(sqlGenre, film.getId());
             jdbcTemplate.update(sqlLike, film.getId());
+            jdbcTemplate.update(sqlDirector, film.getId());
         } catch (DataAccessException e) {
             throw new DataException("Что-то пошло не так при удалении фильма" + e.getMessage());
         }
@@ -116,6 +117,38 @@ public class FilmDbStorage implements FilmStorage {
         return null;
     }
 
+    @Override
+    public Collection<Film> getDirectorFilms(Integer directorId, String sortBy) {
+        String yearOrderSql = "SELECT f.*, " +
+                "m.id as mpa_id, m.name as mpa_name " +
+                "FROM film_directors fd " +
+                "join films f on f.id = fd.film_id " +
+                "join mpa m on f.mpa_rating = m.id " +
+                "where director_id = ? " +
+                "order by year(f.release_date);";
+
+        String likesOrderSql = "select f.*," +
+                "  m.id as mpa_id, m.name as mpa_name, " +
+                "(select count(*) from film_likes where fd.film_id = film_likes.film_id) as likes " +
+                "from film_directors fd " +
+                "join films f on f.id = fd.film_id  " +
+                "join mpa m on f.mpa_rating = m.id " +
+                "where director_id = ? " +
+                "order by likes desc;";
+
+        Collection<Film> films = jdbcTemplate.query(
+                sortBy.equals("likes") ? likesOrderSql : yearOrderSql,
+                new FilmMapper(),
+                directorId
+        );
+
+        if (films.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return setFilmGenres(films);
+    }
+
     private Film addFields(Film film) {
         long filmId = film.getId();
         int mpaId = film.getMpa().getId();
@@ -125,15 +158,20 @@ public class FilmDbStorage implements FilmStorage {
         Collection<Genre> filmGenres = filmGenreStorage.getAllFilmGenresByFilmId(film.getId());
         Mpa filmMpa = mpaStorage.getMpaById(mpaId);
         Collection<Like> filmLikes = likeDbStorage.getLikesFilmId(filmId);
-        return film.toBuilder().mpa(filmMpa).genres(filmGenres).likes(filmLikes).build();
+        filmDirectorStorage.setFilmDirectors(film.getDirectors(), filmId);
+        Collection<Director> directors = filmDirectorStorage.getFilmDirectors(filmId);
+        return film.toBuilder().mpa(filmMpa).genres(filmGenres).likes(filmLikes).directors(directors).build();
     }
 
     private Collection<Film> setFilmGenres(Collection<Film> films) {
         Map<Long, Collection<Genre>> filmGenresMap = filmGenreStorage.getAllFilmGenres(films);
+        Map<Long, Collection<Director>> filmDirectors = filmDirectorStorage.getFilmDirectors(films);
+
         films.forEach(film -> {
             Long filmId = film.getId();
             film.setGenres(filmGenresMap.getOrDefault(filmId, new ArrayList<>()));
             film.setLikes(likeDbStorage.getLikesFilmId(filmId));
+            film.setDirectors(filmDirectors.getOrDefault(filmId, new ArrayList<>()));
         });
 
         return films;

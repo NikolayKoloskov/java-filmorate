@@ -53,6 +53,23 @@ CREATE TABLE IF NOT EXISTS film_likes (
  primary key (film_id, user_id)
 );
 
+CREATE TABLE IF NOT EXISTS directors
+(
+    director_id int auto_increment,
+    name varchar(255) not null,
+    primary key (director_id)
+);
+
+CREATE TABLE IF NOT EXISTS film_directors (
+film_id int,
+director_id int,
+foreign key (film_id) references films (id) on delete cascade,
+foreign key (director_id) references directors (director_id) on delete cascade,
+primary key (director_id, film_id)
+)
+
+
+
 insert into mpa (name)
 values ('G');
 insert into mpa (name)
