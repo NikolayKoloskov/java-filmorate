@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Like;
+import ru.yandex.practicum.filmorate.storage.film.FilmMapper;
 
 import java.util.Collection;
 
@@ -43,4 +45,14 @@ public class LikeDbStorage implements LikeStorage {
     }
 
 
+    @Override
+    public Collection<Film> getLikedFilmsByUserId(Long userId) {
+        String sql = "select films.*, mpa.id as mpa_id, mpa.name as mpa_name " +
+                "from film_likes " +
+                "join films on film_likes.film_id = films.id " +
+                "left join mpa on films.mpa_rating = mpa.id " +
+                "where film_likes.user_id = ?";
+
+        return jdbcTemplate.query(sql, new FilmMapper(), userId);
+    }
 }
