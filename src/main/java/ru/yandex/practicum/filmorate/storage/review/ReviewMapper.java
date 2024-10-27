@@ -9,14 +9,19 @@ import java.sql.SQLException;
 public class ReviewMapper implements RowMapper<Review> {
     @Override
     public Review mapRow(ResultSet rs, int rowNum) throws SQLException {
+
+        Integer valueObj = rs.getInt("useful");
+        int useful = valueObj != null ? valueObj : 0;
+        boolean isPositive = useful > 0;
+
         return new Review()
                 .toBuilder()
                 .reviewId(rs.getLong("id"))
                 .content(rs.getString("content"))
-                .isPositive(rs.getInt("useful") > 0)
+                .isPositive(isPositive)
                 .userId(rs.getInt("user_id"))
                 .filmId(rs.getInt("film_id"))
-                .useful(rs.getInt("useful"))
+                .useful(useful)
                 .build();
     }
 }

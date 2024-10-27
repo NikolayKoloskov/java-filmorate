@@ -16,7 +16,9 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.sql.PreparedStatement;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -28,7 +30,7 @@ public class ReviewDbStorage implements ReviewStorage {
 
     @Override
     public Collection<Review> getAll(int filmId, int count) {
-        String sql = "select r.id, r.content, r.film_id, r.user_id, SUM(rl.reaction) as useful from reviews r inner join review_likes rl on r.id = rl.review_id";
+        String sql = "select r.id, r.content, r.film_id, r.user_id, SUM(rl.reaction) as useful from reviews r left join review_likes rl on r.id = rl.review_id";
 
         if (filmId > 0) {
             sql += " where r.film_id = ?";
@@ -40,19 +42,29 @@ public class ReviewDbStorage implements ReviewStorage {
         }
     }
 
-    /*@Override
-    public Optional<Review> getById(int reviewId) {
-        String sql = "select * from reviews r where r.id = ?";
-        List<Review> reviewList = jdbcTemplate.query(sql, new ReviewMapper(), reviewId);
+    @Override
+    public Optional<Review> getById(Long id) {
+        final String sql = "SELECT * FROM reviews where id = ?";
+        List<Review> reviewList = jdbcTemplate.query(sql, new ReviewMapper(), id);
         if (reviewList.isEmpty()) {
             return Optional.empty();
         }
 
-        return Optional.of(reviewList.getFirst());
-    }*/
+        return Optional.ofNullable(reviewList.getFirst());
+    }
+
+    private boolean isReviewExist(int userId, int filmId) {
+        final String sql = "SELECT * FROM reviews where user_id = ? and film_id = ?";
+        List<Review> reviewList = jdbcTemplate.query(sql, new ReviewMapper(), userId, filmId);
+        return !reviewList.isEmpty();
+    }
 
     @Override
     public Review create(Review review) {
+        if (this.isReviewExist(review.getUserId(), review.getFilmId())) {
+            throw new DataException("отзыв уже существует от пользователя id = " + review.getUserId() + " на фильм id = " + review.getFilmId());
+        }
+
         User user = userStorage.getUserById((long) review.getUserId());
         Film film = filmStorage.getFilmByFilmId((long) review.getFilmId());
         if (film == null) {
@@ -76,6 +88,9 @@ public class ReviewDbStorage implements ReviewStorage {
 
         int reviewId = Objects.requireNonNull(generatedKeyHolder.getKey()).intValue();
         review.setReviewId(reviewId);
+        review.setIsPositive(false);
+        review.setUseful(0);
+
         return review;
     }
 

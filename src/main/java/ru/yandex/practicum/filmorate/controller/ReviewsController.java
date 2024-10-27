@@ -24,6 +24,11 @@ public class ReviewsController {
         return reviewsService.getAll(filmId, count);
     }
 
+    @GetMapping("/{id}")
+    public Review getById(@PathVariable Long id) {
+        return reviewsService.getById(id);
+    }
+
     @PostMapping
     public Review create(@Valid @RequestBody Review review) {
         return reviewsService.create(review);
@@ -58,9 +63,4 @@ public class ReviewsController {
     public void removeDislike(@PathVariable int reviewId, @PathVariable int userId) {
         reviewLikeService.removeDislike(reviewId, userId);
     }
-
-    /*@GetMapping("/likes")
-    public Collection<Review> getAllLikes() {
-        return reviewsService.getAllLikes();
-    }*/
 }

@@ -5,10 +5,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.model.ReviewLike;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.review.ReviewMapper;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -27,9 +26,9 @@ public class ReviewLikeDbStorage implements ReviewLikeStorage {
     @Override
     public void addLike(int reviewId, int userId) {
         User user = userStorage.getUserById((long) userId);
-        /*if (reviewStorage.getById(reviewId).isEmpty()) {
-            throw new NotFoundException("Отзыв не найден id = " + reviewId);
-        }*/
+        if (reviewStorage.getById((long)reviewId).isEmpty()) {
+            throw new NotFoundException("Отзыв id = " + reviewId);
+        }
 
         this.removeLike(reviewId, userId);
         this.addReaction(1, reviewId, userId);
@@ -38,6 +37,10 @@ public class ReviewLikeDbStorage implements ReviewLikeStorage {
     @Override
     public void addDislike(int reviewId, int userId) {
         User user = userStorage.getUserById((long) userId);
+        if (reviewStorage.getById((long)reviewId).isEmpty()) {
+            throw new NotFoundException("Отзыв id = " + reviewId);
+        }
+
         this.removeLike(reviewId, userId);
         this.addReaction(-1, reviewId, userId);
     }
@@ -45,6 +48,10 @@ public class ReviewLikeDbStorage implements ReviewLikeStorage {
     @Override
     public void removeLike(int reviewId, int userId) {
         User user = userStorage.getUserById((long) userId);
+        if (reviewStorage.getById((long)reviewId).isEmpty()) {
+            throw new NotFoundException("Отзыв id = " + reviewId);
+        }
+
         if (this.getReaction(reviewId, userId).isPresent()) {
             this.removeReaction(reviewId, userId);
         }
@@ -53,6 +60,10 @@ public class ReviewLikeDbStorage implements ReviewLikeStorage {
     @Override
     public void removeDislike(int reviewId, int userId) {
         User user = userStorage.getUserById((long) userId);
+        if (reviewStorage.getById((long)reviewId).isEmpty()) {
+            throw new NotFoundException("Отзыв id = " + reviewId);
+        }
+
         if (this.getReaction(reviewId, userId).isPresent()) {
             this.removeReaction(reviewId, userId);
         }
@@ -60,6 +71,10 @@ public class ReviewLikeDbStorage implements ReviewLikeStorage {
 
     public Optional<ReviewLike> getReaction(int reviewId, int userId) {
         User user = userStorage.getUserById((long) userId);
+        if (reviewStorage.getById((long)reviewId).isEmpty()) {
+            throw new NotFoundException("Отзыв id = " + reviewId);
+        }
+
         try {
             ReviewLike reviewLike = jdbcTemplate.queryForObject("select * from review_likes where review_id = ? and user_id = ?",
                     new ReviewLikeMapper(),
@@ -74,6 +89,10 @@ public class ReviewLikeDbStorage implements ReviewLikeStorage {
 
     private void addReaction(int reaction, int reviewId, int userId) {
         User user = userStorage.getUserById((long) userId);
+        if (reviewStorage.getById((long)reviewId).isEmpty()) {
+            throw new NotFoundException("Отзыв id = " + reviewId);
+        }
+
         final String sql = "insert into review_likes (reaction, review_id, user_id) values (?, ?, ?)";
         KeyHolder generatedKeyHolder = new GeneratedKeyHolder();
 
@@ -92,13 +111,16 @@ public class ReviewLikeDbStorage implements ReviewLikeStorage {
 
     private void removeReaction(int reviewId, int userId) {
         User user = userStorage.getUserById((long) userId);
+        if (reviewStorage.getById((long)reviewId).isEmpty()) {
+            throw new NotFoundException("Отзыв id = " + reviewId);
+        }
+
         final String sql = "delete from review_likes where review_id = ? and user_id = ?";
         int result = jdbcTemplate.update(sql, reviewId, userId);
     }
 
     @Override
-    public List<Review> getAll() {
-        //return jdbcTemplate.query("select * from review_likes", new ReviewLikeMapper());
-        return jdbcTemplate.query("select * from reviews", new ReviewMapper());
+    public List<ReviewLike> getAll() {
+        return jdbcTemplate.query("select * from review_likes", new ReviewLikeMapper());
     }
 }

@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.reviewLike;
 
-import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.model.ReviewLike;
 
 import java.util.List;
 
@@ -14,5 +14,5 @@ public interface ReviewLikeStorage {
 
     void removeDislike(int reviewId, int userId);
 
-    List<Review> getAll();
+    List<ReviewLike> getAll();
 }
