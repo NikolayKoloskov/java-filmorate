@@ -12,7 +12,12 @@ public class ReviewMapper implements RowMapper<Review> {
 
         Integer valueObj = rs.getInt("useful");
         int useful = valueObj != null ? valueObj : 0;
-        boolean isPositive = useful >= 0;
+        boolean isPositive;
+        if (useful != 0) {
+            isPositive = useful >= 0;
+        } else {
+            isPositive = rs.getBoolean("is_positive");
+        }
 
         return new Review()
                 .toBuilder()
