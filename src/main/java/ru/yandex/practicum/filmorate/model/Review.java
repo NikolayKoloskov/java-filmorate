@@ -25,6 +25,5 @@ public class Review {
     @NotNull
     private Integer filmId;
 
-    @NotNull
     private Integer useful;
 }
