@@ -71,7 +71,7 @@ public class ReviewDbStorage implements ReviewStorage {
             throw new NotFoundException("Не найден фильм с id = " + review.getFilmId());
         }
 
-        final String sql = "insert into reviews (content, is_positive, user_id, film_id, useful) values (?, ?, ?, ?, ?)";
+        final String sql = "insert into reviews (content, is_positive, user_id, film_id) values (?, ?, ?, ?)";
         KeyHolder generatedKeyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
@@ -83,7 +83,7 @@ public class ReviewDbStorage implements ReviewStorage {
             preparedStatement.setBoolean(2, review.getIsPositive());
             preparedStatement.setInt(3, review.getUserId());
             preparedStatement.setInt(4, review.getFilmId());
-            preparedStatement.setInt(5, review.getUseful());
+            //preparedStatement.setInt(5, review.getUseful());
 
             return preparedStatement;
         }, generatedKeyHolder);
