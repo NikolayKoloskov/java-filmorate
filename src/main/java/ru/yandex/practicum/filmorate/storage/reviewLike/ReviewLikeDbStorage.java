@@ -30,7 +30,7 @@ public class ReviewLikeDbStorage implements ReviewLikeStorage {
             throw new NotFoundException("Отзыв id = " + reviewId);
         }
 
-        this.removeLike(reviewId, userId);
+        //this.removeLike(reviewId, userId);
         this.addReaction(1, reviewId, userId);
     }
 
@@ -41,7 +41,7 @@ public class ReviewLikeDbStorage implements ReviewLikeStorage {
             throw new NotFoundException("Отзыв id = " + reviewId);
         }
 
-        this.removeLike(reviewId, userId);
+        //this.removeLike(reviewId, userId);
         this.addReaction(-1, reviewId, userId);
     }
 
