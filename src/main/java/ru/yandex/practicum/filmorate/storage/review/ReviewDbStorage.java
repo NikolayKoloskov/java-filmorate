@@ -71,7 +71,7 @@ public class ReviewDbStorage implements ReviewStorage {
             throw new NotFoundException("Не найден фильм с id = " + review.getFilmId());
         }
 
-        final String sql = "insert into reviews (content, user_id, film_id) values (?, ?, ?)";
+        final String sql = "insert into reviews (content, is_positive, user_id, film_id, useful) values (?, ?, ?, ?, ?)";
         KeyHolder generatedKeyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
@@ -80,16 +80,18 @@ public class ReviewDbStorage implements ReviewStorage {
                     new String[]{"id"}
             );
             preparedStatement.setString(1, review.getContent());
-            preparedStatement.setInt(2, review.getUserId());
-            preparedStatement.setInt(3, review.getFilmId());
+            preparedStatement.setInt(2, review.getIsPositive());
+            preparedStatement.setInt(3, review.getUserId());
+            preparedStatement.setInt(4, review.getFilmId());
+            preparedStatement.setInt(5, review.getUseful());
 
             return preparedStatement;
         }, generatedKeyHolder);
 
         int reviewId = Objects.requireNonNull(generatedKeyHolder.getKey()).intValue();
         review.setReviewId(reviewId);
-        review.setIsPositive(false);
-        review.setUseful(0);
+        //review.setIsPositive(false);
+        //review.setUseful(0);
 
         return review;
     }
