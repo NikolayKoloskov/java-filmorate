@@ -40,8 +40,8 @@ public class ReviewsController {
     }
 
     @DeleteMapping("/{id}")
-    public String delete(@PathVariable Long id) {
-        return reviewsService.remove(id);
+    public void delete(@PathVariable Long id) {
+        reviewsService.remove(id);
     }
 
     @PutMapping("/{reviewId}/like/{userId}")

@@ -29,8 +29,8 @@ public class ReviewService {
         return reviewStorage.create(review);
     }
 
-    public String remove(Long id) {
-        return reviewStorage.remove(id);
+    public void remove(Long id) {
+        reviewStorage.remove(id);
     }
 
     public List<ReviewLike> getAllLikes() {

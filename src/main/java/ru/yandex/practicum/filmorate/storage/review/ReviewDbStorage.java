@@ -102,14 +102,24 @@ public class ReviewDbStorage implements ReviewStorage {
             throw new NotFoundException("Не найден фильм с id = " + review.getFilmId());
         }
 
-        final String sql = "update reviews set content = ?, user_id = ?, film_id = ? where id = ?";
+        final String sql = "update reviews set content = ?, is_positive = ?, user_id = ?, film_id = ?, useful = ? where id = ?";
 
         try {
             if (jdbcTemplate.update(
                     sql,
-                    review.getContent(), review.getUserId(), review.getFilmId(), review.getReviewId()
+                    review.getContent(),
+                    review.getIsPositive(),
+                    review.getUserId(),
+                    review.getFilmId(),
+                    review.getUseful(),
+                    review.getReviewId()
             ) > 0) {
-                return review;
+                Optional<Review> ans = this.getById(review.getReviewId());
+                if (ans.isPresent()) {
+                    return ans.get();
+                } else {
+                    throw new NotFoundException("Не нашли отзыв " + review.getReviewId());
+                }
             } else {
                 throw new NotFoundException("Не нашли отзыв " + review.getReviewId());
             }
@@ -119,13 +129,11 @@ public class ReviewDbStorage implements ReviewStorage {
     }
 
     @Override
-    public String remove(Long id) {
+    public void remove(Long id) {
         final String sql = "delete from reviews where id = ?";
         int result = jdbcTemplate.update(sql, id);
-        if (result > 0) {
-            return "Отзыв удален";
-        } else {
-            return "Отзыв не найден";
+        if (result <= 0) {
+            throw new NotFoundException("отзыв id = " + id);
         }
     }
 }

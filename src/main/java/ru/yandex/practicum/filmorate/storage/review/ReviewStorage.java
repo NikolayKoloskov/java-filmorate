@@ -10,7 +10,7 @@ public interface ReviewStorage {
 
     Review create(Review review);
 
-    String remove(Long id);
+    void remove(Long id);
 
     Review update(Review review);
 
