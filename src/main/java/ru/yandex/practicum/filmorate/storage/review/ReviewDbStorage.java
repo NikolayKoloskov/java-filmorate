@@ -80,7 +80,7 @@ public class ReviewDbStorage implements ReviewStorage {
                     new String[]{"id"}
             );
             preparedStatement.setString(1, review.getContent());
-            preparedStatement.setInt(2, review.getIsPositive());
+            preparedStatement.setBoolean(2, review.getIsPositive());
             preparedStatement.setInt(3, review.getUserId());
             preparedStatement.setInt(4, review.getFilmId());
             preparedStatement.setInt(5, review.getUseful());
