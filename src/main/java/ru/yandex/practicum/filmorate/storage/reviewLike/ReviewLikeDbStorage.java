@@ -116,8 +116,10 @@ public class ReviewLikeDbStorage implements ReviewLikeStorage {
                 this.addReaction(reaction, reviewId, userId);
             }
 
-            if (review.getUseful() >= 0) {
+            if (review.getUseful() > 0) {
                 review.setIsPositive(true);
+            } else {
+                review.setIsPositive(false);
             }
             reviewStorage.update(review);
         }
