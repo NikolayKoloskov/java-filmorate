@@ -23,23 +23,23 @@ public class ReviewLikeDbStorage implements ReviewLikeStorage {
     private final ReviewStorage reviewStorage;
 
     @Override
-    public void addLike(int reviewId, int userId) {
-        this.updateReview(reviewId, userId, 1, false);
+    public Review addLike(int reviewId, int userId) {
+        return this.updateReview(reviewId, userId, 1, false);
     }
 
     @Override
-    public void addDislike(int reviewId, int userId) {
-        this.updateReview(reviewId, userId, -1, false);
+    public Review addDislike(int reviewId, int userId) {
+        return this.updateReview(reviewId, userId, -1, false);
     }
 
     @Override
-    public void removeLike(int reviewId, int userId) {
-        this.updateReview(reviewId, userId, 1, true);
+    public Review removeLike(int reviewId, int userId) {
+        return this.updateReview(reviewId, userId, 1, true);
     }
 
     @Override
-    public void removeDislike(int reviewId, int userId) {
-        this.updateReview(reviewId, userId, -1, true);
+    public Review removeDislike(int reviewId, int userId) {
+        return this.updateReview(reviewId, userId, -1, true);
     }
 
     public Optional<ReviewLike> getReaction(int reviewId, int userId) {
@@ -92,7 +92,7 @@ public class ReviewLikeDbStorage implements ReviewLikeStorage {
         int result = jdbcTemplate.update(sql, reviewId, userId);
     }
 
-    private void updateReview(int reviewId, int userId, int reaction, boolean remove) {
+    private Review updateReview(int reviewId, int userId, int reaction, boolean remove) {
         //Проверяем пользователя
         User user = userStorage.getUserById((long) userId);
 
@@ -121,7 +121,10 @@ public class ReviewLikeDbStorage implements ReviewLikeStorage {
             } else {
                 review.setIsPositive(false);
             }
+
             reviewStorage.update(review);
+
+            return review;
         }
     }
 }

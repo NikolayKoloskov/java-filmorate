@@ -132,7 +132,6 @@ public class ReviewDbStorage implements ReviewStorage {
         } catch (DataAccessException e) {
             throw new DataException("Ошибка при обновлении отзыва");
         }
-
     }
 
     @Override
