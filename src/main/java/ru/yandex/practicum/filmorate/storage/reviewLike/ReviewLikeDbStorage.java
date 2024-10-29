@@ -6,72 +6,45 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.model.ReviewLike;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.sql.PreparedStatement;
-import java.util.List;
 import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
 public class ReviewLikeDbStorage implements ReviewLikeStorage {
-
     private final JdbcTemplate jdbcTemplate;
     private final UserStorage userStorage;
     private final ReviewStorage reviewStorage;
 
     @Override
     public void addLike(int reviewId, int userId) {
-        User user = userStorage.getUserById((long) userId);
-        if (reviewStorage.getById((long)reviewId).isEmpty()) {
-            throw new NotFoundException("Отзыв id = " + reviewId);
-        }
-
-        //this.removeLike(reviewId, userId);
-        this.addReaction(1, reviewId, userId);
+        this.updateReview(reviewId, userId, 1, false);
     }
 
     @Override
     public void addDislike(int reviewId, int userId) {
-        User user = userStorage.getUserById((long) userId);
-        if (reviewStorage.getById((long)reviewId).isEmpty()) {
-            throw new NotFoundException("Отзыв id = " + reviewId);
-        }
-
-        //this.removeLike(reviewId, userId);
-        this.addReaction(-1, reviewId, userId);
+        this.updateReview(reviewId, userId, -1, false);
     }
 
     @Override
     public void removeLike(int reviewId, int userId) {
-        User user = userStorage.getUserById((long) userId);
-        if (reviewStorage.getById((long)reviewId).isEmpty()) {
-            throw new NotFoundException("Отзыв id = " + reviewId);
-        }
-
-        if (this.getReaction(reviewId, userId).isPresent()) {
-            this.removeReaction(reviewId, userId);
-        }
+        this.updateReview(reviewId, userId, 1, true);
     }
 
     @Override
     public void removeDislike(int reviewId, int userId) {
-        User user = userStorage.getUserById((long) userId);
-        if (reviewStorage.getById((long)reviewId).isEmpty()) {
-            throw new NotFoundException("Отзыв id = " + reviewId);
-        }
-
-        if (this.getReaction(reviewId, userId).isPresent()) {
-            this.removeReaction(reviewId, userId);
-        }
+        this.updateReview(reviewId, userId, -1, true);
     }
 
     public Optional<ReviewLike> getReaction(int reviewId, int userId) {
         User user = userStorage.getUserById((long) userId);
-        if (reviewStorage.getById((long)reviewId).isEmpty()) {
+        if (reviewStorage.getById((long) reviewId).isEmpty()) {
             throw new NotFoundException("Отзыв id = " + reviewId);
         }
 
@@ -89,7 +62,7 @@ public class ReviewLikeDbStorage implements ReviewLikeStorage {
 
     private void addReaction(int reaction, int reviewId, int userId) {
         User user = userStorage.getUserById((long) userId);
-        if (reviewStorage.getById((long)reviewId).isEmpty()) {
+        if (reviewStorage.getById((long) reviewId).isEmpty()) {
             throw new NotFoundException("Отзыв id = " + reviewId);
         }
 
@@ -111,7 +84,7 @@ public class ReviewLikeDbStorage implements ReviewLikeStorage {
 
     private void removeReaction(int reviewId, int userId) {
         User user = userStorage.getUserById((long) userId);
-        if (reviewStorage.getById((long)reviewId).isEmpty()) {
+        if (reviewStorage.getById((long) reviewId).isEmpty()) {
             throw new NotFoundException("Отзыв id = " + reviewId);
         }
 
@@ -119,8 +92,34 @@ public class ReviewLikeDbStorage implements ReviewLikeStorage {
         int result = jdbcTemplate.update(sql, reviewId, userId);
     }
 
-    @Override
-    public List<ReviewLike> getAll() {
-        return jdbcTemplate.query("select * from review_likes", new ReviewLikeMapper());
+    private void updateReview(int reviewId, int userId, int reaction, boolean remove) {
+        //Проверяем пользователя
+        User user = userStorage.getUserById((long) userId);
+
+        //Проверяем отзыв
+        Optional<Review> reviewOptional = reviewStorage.getById((long) reviewId);
+        if (reviewOptional.isEmpty()) {
+            throw new NotFoundException("Отзыв id = " + reviewId);
+        } else {
+            Review review = reviewOptional.get();
+
+            Optional<ReviewLike> reviewLike = this.getReaction(reviewId, userId);
+            if (remove) {
+                if (reviewLike.isPresent()) {
+                    review.setUseful(review.getUseful() - reaction);
+                    this.removeReaction(reviewId, userId);
+                } else {
+                    throw new NotFoundException("Реакция от пользователя id = " + userId + " на отзыв id = " + reviewId);
+                }
+            } else {
+                review.setUseful(review.getUseful() + reaction);
+                this.addReaction(reaction, reviewId, userId);
+            }
+
+            if (review.getUseful() >= 0) {
+                review.setIsPositive(true);
+            }
+            reviewStorage.update(review);
+        }
     }
 }
