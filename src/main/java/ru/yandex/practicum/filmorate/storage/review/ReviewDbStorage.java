@@ -120,6 +120,12 @@ public class ReviewDbStorage implements ReviewStorage {
                     review.getFilmId(),
                     Objects.isNull(review.getUseful()) ? currentReview.get().getUseful() : review.getUseful(),
                     review.getReviewId()) > 0) {
+                Optional<Review> ans = this.getById(review.getReviewId());
+                if (ans.isPresent()) {
+                    return ans.get();
+                } else {
+                    throw new NotFoundException("Не нашли отзыв " + review.getReviewId());
+                }
             } else {
                 throw new NotFoundException("Не нашли отзыв " + review.getReviewId());
             }
@@ -127,12 +133,6 @@ public class ReviewDbStorage implements ReviewStorage {
             throw new DataException("Ошибка при обновлении отзыва");
         }
 
-        Optional<Review> ans = this.getById(review.getReviewId());
-        if (ans.isPresent()) {
-            return ans.get();
-        } else {
-            throw new NotFoundException("Не нашли отзыв " + review.getReviewId());
-        }
     }
 
     @Override
