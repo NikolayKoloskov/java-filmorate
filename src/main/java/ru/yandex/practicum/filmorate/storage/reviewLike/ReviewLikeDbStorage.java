@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.model.ReviewLike;
-import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -44,7 +43,7 @@ public class ReviewLikeDbStorage implements ReviewLikeStorage {
 
     @Override
     public Optional<ReviewLike> getReaction(int reviewId, int userId) {
-        User user = userStorage.getUserById((long) userId);
+        userStorage.getUserById((long) userId);
         if (reviewStorage.getById((long) reviewId).isEmpty()) {
             throw new NotFoundException("Отзыв id = " + reviewId);
         }
@@ -62,7 +61,7 @@ public class ReviewLikeDbStorage implements ReviewLikeStorage {
     }
 
     private void addReaction(int reaction, int reviewId, int userId) {
-        User user = userStorage.getUserById((long) userId);
+        userStorage.getUserById((long) userId);
         if (reviewStorage.getById((long) reviewId).isEmpty()) {
             throw new NotFoundException("Отзыв id = " + reviewId);
         }
@@ -84,7 +83,7 @@ public class ReviewLikeDbStorage implements ReviewLikeStorage {
     }
 
     private void removeReaction(int reviewId, int userId) {
-        User user = userStorage.getUserById((long) userId);
+        userStorage.getUserById((long) userId);
         if (reviewStorage.getById((long) reviewId).isEmpty()) {
             throw new NotFoundException("Отзыв id = " + reviewId);
         }
@@ -95,7 +94,7 @@ public class ReviewLikeDbStorage implements ReviewLikeStorage {
 
     private Review updateReview(int reviewId, int userId, int reaction, boolean remove) {
         //Проверяем пользователя
-        User user = userStorage.getUserById((long) userId);
+        userStorage.getUserById((long) userId);
 
         //Проверяем отзыв
         Optional<Review> reviewOptional = reviewStorage.getById((long) reviewId);

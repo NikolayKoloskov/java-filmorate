@@ -114,10 +114,4 @@ public class UserDbStorage implements UserStorage {
                 " (select fr.friend_id from users u join friend_requests fr on u.id = fr.user_id where u.id = ?)";
         return jdbcTemplate.query(sql, new UserMapper(), userId);
     }
-
-    @Override
-    public boolean deleteUserById(Long id) {
-        final String sql = "delete from users where id = ?";
-        return jdbcTemplate.update(sql, id) > 0;
-    }
 }

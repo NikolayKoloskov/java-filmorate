@@ -18,6 +18,4 @@ public interface UserStorage {
     Collection<User> getMutualFriends(User userFrom, User userTo);
 
     Collection<User> getUserFriends(Long id);
-
-    boolean deleteUserById(Long id);
 }

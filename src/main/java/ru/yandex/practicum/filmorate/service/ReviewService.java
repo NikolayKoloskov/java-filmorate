@@ -30,7 +30,6 @@ public class ReviewService {
         Review reviewToReturn = reviewStorage.create(review);
         eventService.createEvent(Long.valueOf(reviewToReturn.getUserId()),
                 EventType.REVIEW, EventOperation.ADD, reviewToReturn.getReviewId());
-        Review createdReview = reviewStorage.getById(reviewToReturn.getReviewId()).get();
         log.info("CreatedReview: {}, timestamp {}", reviewToReturn, System.currentTimeMillis());
         return reviewToReturn;
     }

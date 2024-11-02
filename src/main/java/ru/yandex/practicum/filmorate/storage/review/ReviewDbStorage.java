@@ -10,7 +10,6 @@ import ru.yandex.practicum.filmorate.exceptions.DataException;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Review;
-import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -27,7 +26,7 @@ public class ReviewDbStorage implements ReviewStorage {
 
     @Override
     public Collection<Review> getAll(int filmId, int count) {
-        String sql = "select r.id, r.content, r.is_positive, r.film_id, r.user_id, r.useful from reviews r";
+        String sql = "select * from reviews r";
 
         if (filmId > 0) {
             sql += " where r.film_id = ?";
@@ -72,7 +71,7 @@ public class ReviewDbStorage implements ReviewStorage {
             throw new DataException("отзыв уже существует от пользователя id = " + review.getUserId() + " на фильм id = " + review.getFilmId());
         }
 
-        User user = userStorage.getUserById((long) review.getUserId());
+        userStorage.getUserById((long) review.getUserId());
         Film film = filmStorage.getFilmByFilmId((long) review.getFilmId());
         if (film == null) {
             throw new NotFoundException("Не найден фильм с id = " + review.getFilmId());
@@ -109,7 +108,7 @@ public class ReviewDbStorage implements ReviewStorage {
         if (currentReview.isEmpty()) {
             throw new NotFoundException("Не нашли отзыв " + review.getReviewId());
         }
-        User user = userStorage.getUserById((long) review.getUserId());
+        userStorage.getUserById((long) review.getUserId());
         Film film = filmStorage.getFilmByFilmId((long) review.getFilmId());
         if (film == null) {
             throw new NotFoundException("Не найден фильм с id = " + review.getFilmId());
